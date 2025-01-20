@@ -18,56 +18,58 @@ if "score" not in st.session_state:
     st.session_state.round = 0
     st.session_state.max_rounds = 10
     st.session_state.cards = generate_cards()
+    st.session_state.game_over = False
 
 # Display the game interface
 st.title("Color Matching Game")
-st.write("Does the color name on Card 1 match the text color on Card 2?")
-st.write(f"Round: {st.session_state.round + 1}/{st.session_state.max_rounds}")
 
-# Display the cards
-card1_name, card1_color, card2_name, card2_color = st.session_state.cards
+if not st.session_state.game_over:
+    # Display current round and score
+    st.write(f"Round: {st.session_state.round + 1}/{st.session_state.max_rounds}")
+    st.write(f"Score: {st.session_state.score}")
 
-st.markdown(
-    f'<p style="font-size:24px; font-weight:bold; color:{card1_color};">'
-    f"Card 1: {card1_name}</p>",
-    unsafe_allow_html=True,
-)
+    # Retrieve current cards
+    card1_name, card1_color, card2_name, card2_color = st.session_state.cards
 
-st.markdown(
-    f'<p style="font-size:24px; font-weight:bold; color:{card2_color};">'
-    f"Card 2: {card2_name}</p>",
-    unsafe_allow_html=True,
-)
+    # Display the cards
+    st.markdown(
+        f'<p style="font-size:24px; font-weight:bold; color:{card1_color};">'
+        f"Card 1: {card1_name}</p>",
+        unsafe_allow_html=True,
+    )
 
-# Game logic
-def next_round(is_yes):
-    if (card1_name == card2_color and is_yes) or (card1_name != card2_color and not is_yes):
-        st.session_state.score += 1
+    st.markdown(
+        f'<p style="font-size:24px; font-weight:bold; color:{card2_color};">'
+        f"Card 2: {card2_name}</p>",
+        unsafe_allow_html=True,
+    )
 
-    st.session_state.round += 1
-    if st.session_state.round < st.session_state.max_rounds:
-        st.session_state.cards = generate_cards()
-    else:
-        st.session_state.game_over = True
+    # Game logic
+    def process_answer(is_yes):
+        """Check the answer, update the score, and progress to the next round."""
+        correct_match = card1_name == card2_color
+        if (is_yes and correct_match) or (not is_yes and not correct_match):
+            st.session_state.score += 1  # Increment score for correct answer
 
-# Buttons for user input
-col1, col2 = st.columns(2)
+        st.session_state.round += 1  # Move to the next round
+        if st.session_state.round < st.session_state.max_rounds:
+            st.session_state.cards = generate_cards()  # Generate new cards
+        else:
+            st.session_state.game_over = True
 
-with col1:
-    if st.button("Yes"):
-        next_round(True)
+    # Buttons for user input
+    col1, col2 = st.columns(2)
 
-with col2:
-    if st.button("No"):
-        next_round(False)
+    with col1:
+        if st.button("Yes", key=f"yes_button_{st.session_state.round}"):
+            process_answer(True)
 
-# Display results or progress
-if "game_over" in st.session_state and st.session_state.game_over:
-    st.markdown(f"## Game Over! Your final score is {st.session_state.score}/{st.session_state.max_rounds}")
-    if st.button("Play Again"):
-        st.session_state.score = 0
-        st.session_state.round = 0
-        st.session_state.cards = generate_cards()
-        st.session_state.game_over = False
-else:
-    st.markdown(f"Score: {st.session_state.score}")
+    with col2:
+        if st.button("No", key=f"no_button_{st.session_state.round}"):
+            process_answer(False)
+
+# Display results at the end of the game
+if st.session_state.game_over:
+    st.markdown(f"## Game Over! 🎉 Your final score is **{st.session_state.score}/{st.session_state.max_rounds}**.")
+    # Clear UI for the final round
+    st.stop()
