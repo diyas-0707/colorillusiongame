@@ -39,6 +39,7 @@ def process_answer(is_yes):
 
 # Display the game interface
 st.title("Color Matching Game")
+st.write("Does the name of the color on Card 1 match the color of Card 2?")
 
 if not st.session_state.game_over:
     # Display current round and score
